@@ -1,0 +1,173 @@
+import requests
+
+BASE = "https://httpbin.org"
+PATHS = ["/get", "/redirect/2", "/delay/1", "/status/404", "/delay/5"]
+
+
+# Partea 1: Parametri in URL
+
+def search(params):
+    r = requests.get(BASE + "/get", params=params)
+    return r.json()["args"]
+
+
+def search_url(params):
+    r = requests.get(BASE + "/get", params=params)
+    return r.url
+
+
+# Partea 2: Anteturi
+
+def fetch_with_agent(agent):
+    r = requests.get(BASE + "/headers",
+                     headers={"User-Agent": agent})
+    return r.json()["headers"]["User-Agent"]
+
+
+def default_agent():
+    r = requests.get(BASE + "/headers")
+    return r.json()["headers"]["User-Agent"]
+
+
+# Partea 3: Trimiterea datelor
+
+def post_json(data):
+    r = requests.post(BASE + "/post", json=data)
+    return r.json()["json"]
+
+
+def post_form(data):
+    r = requests.post(BASE + "/post", data=data)
+    return r.json()["form"]
+
+
+# Partea 4: Coduri de stare
+
+def describe_status(code):
+    r = requests.get(BASE + "/status/" + str(code))
+
+    if 200 <= r.status_code < 300:
+        return "succes"
+    elif 400 <= r.status_code < 500:
+        return "eroare client"
+    elif 500 <= r.status_code < 600:
+        return "eroare server"
+    return "alt status"
+
+
+def is_ok(code):
+    try:
+        r = requests.get(BASE + "/status/" + str(code))
+        r.raise_for_status()
+        return True
+    except requests.HTTPError:
+        return False
+
+
+# Partea 5: Redirectionari
+
+def count_redirects(n):
+    r = requests.get(BASE + "/redirect/" + str(n))
+    return len(r.history)
+
+
+def final_url(n):
+    r = requests.get(BASE + "/redirect/" + str(n))
+    return r.url
+
+
+def first_hop(n):
+    r = requests.get(
+        BASE + "/redirect/" + str(n),
+        allow_redirects=False
+    )
+    return r.headers["Location"]
+
+
+# Partea 6: Sesiuni si cookie-uri
+
+def cookie_demo(name, value):
+    s = requests.Session()
+    s.get(BASE + "/cookies/set",
+          params={name: value})
+    r = s.get(BASE + "/cookies")
+    return r.json()["cookies"]
+
+
+def no_session_demo(name, value):
+    requests.get(BASE + "/cookies/set",
+                 params={name: value})
+    r = requests.get(BASE + "/cookies")
+    return r.json()["cookies"]
+
+
+# Partea 7: Raportul final
+
+def report(path):
+    try:
+        r = requests.get(BASE + path, timeout=3)
+
+        return {
+            "status": r.status_code,
+            "final_url": r.url,
+            "redirects": len(r.history),
+            "seconds": r.elapsed.total_seconds(),
+            "content_type": r.headers.get("Content-Type", "").split(";")[0]
+        }
+
+    except requests.RequestException as e:
+        return {
+            "status": None,
+            "error": str(e)
+        }
+
+
+def main():
+    rezultate = []
+
+    for path in PATHS:
+        rezultat = report(path)
+        rezultat["path"] = path
+        rezultate.append(rezultat)
+
+    reusite = []
+
+    for rezultat in rezultate:
+        if rezultat["status"] == 200:
+            reusite.append(rezultat)
+
+    reusite.sort(
+        key=lambda x: x["seconds"],
+        reverse=True
+    )
+
+    for rezultat in reusite:
+        print(
+            rezultat["path"],
+            "->",
+            rezultat["status"],
+            ",",
+            round(rezultat["seconds"], 2),
+            "secunde"
+        )
+
+    print("Reusite:", len(reusite))
+    print("Esuate:", len(rezultate) - len(reusite))
+
+
+# Bonus: Autentificare
+
+def check_login(user, password):
+    try:
+        r = requests.get(
+            BASE + "/basic-auth/admin/secret",
+            auth=(user, password)
+        )
+        return r.status_code == 200
+    except requests.RequestException:
+        return False
+
+
+if __name__ == "__main__":
+    main()
+
