@@ -1,5 +1,5 @@
 
-from arsenal.privesc.enum import citeste_linii, nume, GTFO
+from arsenal.privesc.enumerare import citeste_linii, nume, GTFO
 
 
 def cai(fisier):
