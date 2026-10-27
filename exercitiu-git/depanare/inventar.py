@@ -38,7 +38,7 @@ def peste_prag(tinte, prag):
     rezultat = []
     for t in tinte:
         port = port_valid(t["port"])
-        if port > prag:
+        if port is not None and port > prag:
             rezultat.append(t["gazda"])
     return rezultat
 
