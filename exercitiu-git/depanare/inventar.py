@@ -5,7 +5,7 @@ import argparse
 import json
 
 
-def incarca(cale)
+def incarca(cale):
     """Citeste lista de tinte din fisierul JSON."""
     with open(cale) as f:
         return json.load(f)
@@ -16,7 +16,7 @@ def port_valid(text):
     try:
         return int(text)
     except ValueError:
-    return None
+        return None
 
 
 def pe_servicii(tinte):
@@ -49,7 +49,7 @@ def main():
     a = p.parse_args()
 
     tinte = incarca(a.fisier)
-    print("Tinte citite: " + len(tinta))
+    print("Tinte citite: " , len(tinte))
 
     grupe = pe_servicii(tinte)
     for serviciu, porturi in grupe.items():
